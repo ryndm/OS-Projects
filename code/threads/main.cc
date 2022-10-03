@@ -265,7 +265,7 @@ main(int argc, char **argv)
 
     kernel->Initialize();
 
-    CallOnUserAbort(Cleanup);		// if user hits ctl-C
+   CallOnUserAbort(Cleanup);		// if user hits ctl-C
 
     // at this point, the kernel is ready to do something
     // run some tests, if requested
@@ -274,7 +274,7 @@ main(int argc, char **argv)
       ThreadTest();
     }
     if (consoleTestFlag) {
-      kernel->ConsoleTest();   // interactive test of the synchronized console
+     kernel->ConsoleTest();   // interactive test of the synchronized console
     }
     if (networkTestFlag) {
       kernel->NetworkTest();   // two-machine test of the network
@@ -299,9 +299,20 @@ main(int argc, char **argv)
 #endif // FILESYS_STUB
 
     // finally, run an initial user program if requested to do so
+/* jcoh: commented out for Project 1
     if (userProgName != NULL) {
       RunUserProg(userProgName);
     }
+*/
+
+/*
+jcoh: Implement a for-loop printing out all program names given by -x flags.
+You need to modify the following printf() part with some kind of loop
+to print out all program names.
+*/
+   printf("The user program name is %s\n", userProgName);
+
+
 
     // NOTE: if the procedure "main" returns, then the program "nachos"
     // will exit (as any other normal program would).  But there may be

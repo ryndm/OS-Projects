@@ -182,7 +182,9 @@ main(int argc, char **argv)
 {
     int i;
     char *debugArg = "";
-    char *userProgName = NULL;        // default is not to execute a user prog
+    int maxProgs = 10;
+    char **userProgName = new char*[maxProgs];        // default is not to execute a user prog
+    int currProgIndex = 0;
     bool threadTestFlag = false;
     bool consoleTestFlag = false;
     bool networkTestFlag = false;
@@ -209,7 +211,17 @@ main(int argc, char **argv)
 	}
 	else if (strcmp(argv[i], "-x") == 0) {
 	    ASSERT(i + 1 < argc);
-	    userProgName = argv[i + 1];
+        if(currProgIndex < maxProgs) userProgName[currProgIndex++] = argv[i + 1];
+        else {
+            maxProgs *= 2;
+            char **tempPointer = userProgName;
+            userProgName = new char*[maxProgs];
+            for(int j = 0;j<currProgIndex;j++) {
+                userProgName[j] = tempPointer[j];
+            }
+            userProgName[currProgIndex++] = argv[i + 1];
+            free(tempPointer);
+        }
 	    i++;
 	}
 	else if (strcmp(argv[i], "-K") == 0) {
@@ -310,8 +322,11 @@ jcoh: Implement a for-loop printing out all program names given by -x flags.
 You need to modify the following printf() part with some kind of loop
 to print out all program names.
 */
-   printf("The user program name is %s\n", userProgName);
+    for(int i = 0;i<currProgIndex;i++) {
+      printf("Program [%d] = %s\n", i, userProgName[i]);
+    }
 
+    // I've used git versioning for better development experience
 
 
     // NOTE: if the procedure "main" returns, then the program "nachos"

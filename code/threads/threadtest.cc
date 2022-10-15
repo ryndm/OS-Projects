@@ -9,7 +9,7 @@ SimpleThread(int which)
     
     for (num = 0; num < 5; num++) {
         printf("*** thread %d looped %d times\n", which, num);
-        kernel->currentThread->Yield();
+       kernel->currentThread->Yield();
     }
 }
 
@@ -18,6 +18,13 @@ ThreadTest()
 {
     Thread *t = new Thread("forked thread");
     t->Fork((VoidFunctionPtr) SimpleThread, (void *) 1);
+
+    Thread *t1 = new Thread("forked thread");
+    t1->Fork((VoidFunctionPtr) SimpleThread, (void *) 2);
+
+    Thread *t2 = new Thread("forked thread");
+    t2->Fork((VoidFunctionPtr) SimpleThread, (void *) 3);
+
     
     SimpleThread(0);
 }

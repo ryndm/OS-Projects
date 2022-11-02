@@ -49,6 +49,7 @@
 // global variables
 Kernel *kernel;
 Debug *debug;
+int quantumTicks;
 
 extern void ThreadTest(void);
 
@@ -181,6 +182,7 @@ int
 main(int argc, char **argv)
 {
     int i;
+    quantumTicks = TimerTicks;
     char *debugArg = "";
     int maxProgs = 10;
     char **userProgName = new char*[maxProgs];        // default is not to execute a user prog
@@ -233,6 +235,11 @@ main(int argc, char **argv)
 	else if (strcmp(argv[i], "-N") == 0) {
 	    networkTestFlag = TRUE;
 	}
+    else if (strcmp(argv[i], "-quantum") == 0) {
+        ASSERT(i + 1 < argc);
+        quantumTicks = atoi(argv[i + 1]);
+        i++;
+    }
 #ifndef FILESYS_STUB
 	else if (strcmp(argv[i], "-cp") == 0) {
 	    ASSERT(i + 2 < argc);

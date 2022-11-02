@@ -14,6 +14,7 @@
 
 extern Kernel *kernel;
 extern Debug *debug;
+extern int quantumTicks;
 
 #endif // MAIN_H
 

@@ -48,8 +48,12 @@ Alarm::CallBack()
 {
     Interrupt *interrupt = kernel->interrupt;
     MachineStatus status = interrupt->getStatus();
+
+    // if(kernel->stats->totalTicks%(4*TimerTicks) == 0) {
+        // printf ("In Alarm::CallBack(), totalTicks = %d\n", kernel->stats->totalTicks);
+    // }
     
-    if (status != IdleMode) {
+    if (kernel->stats->totalTicks%kernel->quantumTicks == 0 &&status != IdleMode) {
 	interrupt->YieldOnReturn();
     }
 }

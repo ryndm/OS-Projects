@@ -324,7 +324,7 @@ to print out all program names.
 */
     for(int i = 0;i<currProgIndex;i++) {
     //   printf("Program [%d] = %s\n", i, userProgName[i]);
-      (new Thread("forked thread"))->Fork((VoidFunctionPtr) RunUserProg, (void *) userProgName[i]);
+      (new Thread(userProgName[i]))->Fork((VoidFunctionPtr) RunUserProg, (void *) userProgName[i]);
     }
 
     // I've used git versioning for better development experience

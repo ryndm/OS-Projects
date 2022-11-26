@@ -3,11 +3,13 @@
 int
 main()
 {
-  int i,j;
-  for (i = 0; i < 5; i++)
-  {
-    for (j = 0; j < 10000; j++);
-  }
+  OpenFileId output = ConsoleOutput;
+
+  char* str = "Hello from exit-test1\n";
+
+  Write(str, 23, output);
+
   Exit(1);
+
 }
 

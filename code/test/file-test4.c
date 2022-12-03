@@ -1,4 +1,4 @@
-#include<stdio.h>
+#include "syscall.h"
 #define READ_BYTES 33
 
 // convert an integer to a string. The code is available over the Internet
@@ -27,19 +27,19 @@ int main() {
   OpenFileId output, failTest = 0;
   char num2stringBuffer[100];
 
-  output = Open('test-file.txt');
+  output = Open("test-file.txt");
   
   if(output == -1)
     Exit(1);
 
-  int rd = Read(buf, READ_BYTES, output);
+  Read(buf, READ_BYTES, output);
 
   Write(buf, READ_BYTES, ConsoleOutput);
 
   Write("Read returned ", 14, ConsoleOutput);
-  int length = tostring(&num2stringBuffer, rd);
-  Write(&num2stringBuffer, length, ConsoleOutput);
-  Write("\n", 2, ConsoleOutput);
+  // int length = tostring(&num2stringBuffer, rd);
+  // Write(&num2stringBuffer, length, ConsoleOutput);
+  // Write("\n", 2, ConsoleOutput);
 
   if(Close(output) == -1)
     Write("Failed to close file\n", 22, ConsoleOutput);

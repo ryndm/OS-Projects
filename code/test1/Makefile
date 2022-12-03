@@ -107,13 +107,12 @@ LD = $(GCCDIR)ld
 
 INCDIR =-I../userprog -I../lib
 CFLAGS = -G 0 -c $(INCDIR) -B/usr/local/nachos/lib/gcc-lib/decstation-ultrix/2.95.2/ -B/usr/local/nachos/decstation-ultrix/bin/
-#CFLAGS = -G 0 -c $(INCDIR) ~/usr/local/nachos/lib/gcc-lib/decstation-ultrix/2.95.2/ ~/usr/local/nachos/decstation-ultrix/bin/
 
 ifeq ($(hosttype),unknown)
 PROGRAMS = unknownhost
 else
 # change this if you create a new test program!
-PROGRAMS = add halt shell matmult sort segments prog1 prog2 prog3 prog3b prog4 prog5 read write read-write file-test4
+PROGRAMS = add halt shell matmult sort segments prog1 prog2 prog3 prog3b prog4 prog5 read write read-write
 endif
 
 all: $(PROGRAMS)
@@ -129,6 +128,7 @@ halt: halt.o start.o
 
 add.o: add.c
 	$(CC) $(CFLAGS) -c add.c
+
 add: add.o start.o
 	$(LD) $(LDFLAGS) start.o add.o -o add.coff
 	$(COFF2NOFF) add.coff add
@@ -205,17 +205,12 @@ write: write.o start.o
 	$(LD) $(LDFLAGS) start.o write.o -o write.coff
 	$(COFF2NOFF) write.coff write
 
-read-write.o:read-write.c
+read-write.o: read-write.c
 	$(CC) $(CFLAGS) -c read-write.c
 read-write: read-write.o start.o
 	$(LD) $(LDFLAGS) start.o read-write.o -o read-write.coff
 	$(COFF2NOFF) read-write.coff read-write
 
-file-test4.o: file-test4.c
-	$(CC) $(CFLAGS) -c file-test4.c
-file-test4: file-test4.o start.o
-	$(LD) $(LDFLAGS) start.o file-test4.o -o file-test4.coff
-	$(COFF2NOFF) file-test4.coff file-test4
 
 clean:
 	$(RM) -f *.o *.ii

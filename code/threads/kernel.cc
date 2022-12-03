@@ -26,7 +26,6 @@
 
 Kernel::Kernel(int argc, char **argv)
 {
-    quantumTicks = 100;        // initialize quantum to 100
     randomSlice = FALSE; 
     debugUserProg = FALSE;
     consoleIn = NULL;          // default is stdin
@@ -50,13 +49,7 @@ Kernel::Kernel(int argc, char **argv)
 	    ASSERT(i + 1 < argc);
 	    consoleIn = argv[i + 1];
 	    i++;
-	} else if (strcmp(argv[i], "-quantum") == 0) {
-        ASSERT(i + 1 < argc);
-        int tempQ = atoi(argv[i + 1]);
-        // rounding off to nearest 100 if not a multiple
-        quantumTicks = tempQ%100 == 0 ? tempQ : tempQ + (100 - tempQ%100);
-        i++;
-    } else if (strcmp(argv[i], "-co") == 0) {
+	} else if (strcmp(argv[i], "-co") == 0) {
 	    ASSERT(i + 1 < argc);
 	    consoleOut = argv[i + 1];
 	    i++;
@@ -103,7 +96,7 @@ Kernel::Initialize()
     stats = new Statistics();		// collect statistics
     interrupt = new Interrupt;		// start up interrupt handling
     scheduler = new Scheduler();	// initialize the ready queue
-    alarm = new Alarm(randomSlice);	// start up time slicing
+    //alarm = new Alarm(randomSlice);	// start up time slicing
     machine = new Machine(debugUserProg);
     synchConsoleIn = new SynchConsoleInput(consoleIn); // input from stdin
     synchConsoleOut = new SynchConsoleOutput(consoleOut); // output to stdout

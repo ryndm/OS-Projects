@@ -36,6 +36,7 @@
 
 #ifndef THREAD_H
 #define THREAD_H
+#define MAX_THREADS 100
 
 #include "copyright.h"
 #include "utility.h"
@@ -82,6 +83,7 @@ class Thread {
     void *machineState[MachineStateSize];  // all registers except for stackTop
 
   public:
+    static int pidCount;
     Thread(char* debugName);		// initialize a Thread 
     ~Thread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted
@@ -104,6 +106,7 @@ class Thread {
     char* getName() { return (name); }
     void Print() { cout << name; }
     void SelfTest();		// test whether thread impl is working
+    int getPid();
 
   private:
     // some of the private data for this class is listed above
@@ -117,6 +120,7 @@ class Thread {
     void StackAllocate(VoidFunctionPtr func, void *arg);
     				// Allocate a stack for thread.
 				// Used internally by Fork()
+    int pid;
 
 // A thread running a user program actually has *two* sets of CPU registers -- 
 // one for its state while executing user code, one for its state 

@@ -25,6 +25,8 @@
 #include "main.h"
 #include "syscall.h"
 #include "ksyscall.h"
+#include "unistd.h"
+#include <unordered_map>
 //----------------------------------------------------------------------
 // ExceptionHandler
 //  Entry point into the Nachos kernel.  Called when a user program
@@ -48,23 +50,51 @@
 //  is in machine.h.
 //----------------------------------------------------------------------
 
+// character array used to store extracted file name
+char gBuf[100];
+// Thread *runningThreads[10];
+unordered_map<int, Thread*> runningThreads;
+Thread *joiningThread;
+SpaceId joinedThread;
+
+// Program similar to RunUserProg in main.cc used to run program
+void
+RunUserProgTemp(void *filename) {
+    AddrSpace *space = new AddrSpace;
+    ASSERT(space != (AddrSpace *)NULL);
+    if (space->Load((char*)filename)) {  // load the program into the space
+        space->Execute();         // run the program
+    }
+    ASSERTNOTREACHED();
+}
+
+void extractName(int num) {
+  bzero(gBuf, 100);        // set the buffer with zeros
+  gBuf[99] = '\0';         // set last value as \0 just for safety
+  int n = 0;
+  int vAddr = kernel->machine->ReadRegister(num);
+  do {
+    kernel->machine->ReadMem(vAddr + n, 1, (int*)(gBuf+n));
+  } while(n < 99 && gBuf[n++] != '\0');
+}
+
 void
 ExceptionHandler(ExceptionType which)
 {
   int type = kernel->machine->ReadRegister(2);
-  
   DEBUG(dbgSys, "Received Exception " << which << " type: " << type << "\n");
-  
+
+
   switch (which) {
     case SyscallException:
       switch(type) {
-        case SC_Halt:
+        case SC_Halt:{
           DEBUG(dbgSys, "Shutdown, initiated by user program.\n");
           
           SysHalt();
-          break;
+        }break;
           
-        case SC_Add:
+        case SC_Add:{
           DEBUG(dbgSys, "Add " << kernel->machine->ReadRegister(4) << " + " << kernel->machine->ReadRegister(5) << "\n");
           
           /* Process SysAdd Systemcall*/
@@ -77,20 +107,128 @@ ExceptionHandler(ExceptionType which)
           kernel->machine->WriteRegister(2, (int)result);
           
           
-          break;
+        }break;
           
-        case SC_Write:
-          printf("Write system call made by %s\n", kernel->currentThread->getName());
-          break;
+        case SC_Write:{
+          // printf("Write system call made by %s\n", kernel->currentThread->getName());
+          // printf("in ExceptionHandler, Write() System Call is made. The first parameter is %d, the second parameter is %d, and the third parameter is %d\n\n", kernel->machine->ReadRegister(4), kernel->machine->ReadRegister(5), kernel->machine->ReadRegister(6));
 
-        case SC_Read:
-          printf("Read system call made by %s\n", kernel->currentThread->getName());
-          break;
+          // Read the arguments passed. Not reading 3rd argument as we know its going to be ConsoleOutput
+          int strAddr = kernel->machine->ReadRegister(4);
+          int strLength = kernel->machine->ReadRegister(5);
+          OpenFileId output = kernel->machine->ReadRegister(6);
 
-        case SC_Exit:
-          printf("Exit system call made by %s\n", kernel->currentThread->getName());
+          char strRead[strLength];        // create a temporary buffer to store the values we read from memory
+          int oneChar;                    // temporary int for storing translated physical address for one char
+          int n = 0;                      // counter to store the number of bytes we read
+          while(n < strLength) {
+            kernel->machine->ReadMem(strAddr + n,1,&oneChar);    // get the physical address
+            strRead[n++] = (char)oneChar;                        // store the value present at that address into our temporary buffer
+          }
+          // printf("in write %s", strRead);
+          // printf("output is %d", output);
+          if(output == ConsoleOutput) {
+            // printf("Wrote in console\n");
+            printf("%s", strRead);                     // print the buffer to console
+          } else {
+            // printf("Wrote in file\n");
+            fprintf((FILE*)output, strRead);
+          }
+          kernel->machine->WriteRegister(2, n);      // storing the number of bytes we read in r2
+        }break;
+
+        case SC_Create: {
+          extractName(4);
+          FILE *fp = fopen(gBuf, "w");
+          if(fp) {
+            // printf("file created\n");
+            fclose(fp);
+            kernel->machine->WriteRegister(2, 1);
+          } else {
+            // printf("file creation failed\n");
+            kernel->machine->WriteRegister(2, -1);
+          }
+        }break;
+
+        case SC_Open: {
+          extractName(4);
+          if (access(gBuf, F_OK) == 0) {
+            FILE *fp = fopen(gBuf, "a");
+            if(fp) {
+              // printf("file opened\n");
+              kernel->machine->WriteRegister(2, (OpenFileId)fp);
+            } else {
+              kernel->machine->WriteRegister(2, -1);
+            }
+          } else {
+            // printf("file not present\n");
+            kernel->machine->WriteRegister(2, -1);
+          }
+        }break;
+
+        case SC_Read:{
+          // printf("in read\n");
+          char* buffer = (char *)kernel->machine->ReadRegister(4);
+          int size = kernel->machine->ReadRegister(5);
+          OpenFileId fileId = kernel->machine->ReadRegister(6);
+          char ch;
+          int n = -1;
+          do {
+            n++;
+            ch = fgetc((FILE*)fileId);
+            *(buffer + n) = ch;
+            size--;
+          } while(buffer[n] != '\0' && n < 99 && buffer[n] != EOF && size>=0);
+          // printf("string read is\n");
+          // printf("%s\n", gBuf);
+          kernel->machine->WriteRegister(2, n);
+        }break;
+
+        case SC_Close:{
+          int fileId = kernel->machine->ReadRegister(4);
+          int status = fclose((FILE*)fileId) == 0 ? 1 : -1;   // fclose returns 0 on success
+          // printf("file closed\n");
+          kernel->machine->WriteRegister(2, status);
+        }break;
+
+        case SC_Exec:{
+          extractName(4);
+          char *fname = gBuf;
+          if(fname == NULL) {
+            kernel->machine->WriteRegister(2, -1);
+          } else {
+            Thread * t = new Thread(gBuf);
+            t->Fork((VoidFunctionPtr)RunUserProgTemp, gBuf);
+            runningThreads[(int)t] = t;
+            kernel->machine->WriteRegister(2, (int)t);
+          }
+        }break;
+
+        case SC_Exit:{
+          // if(kernel->machine->ReadRegister(4) == 0)
+          //   printf("Process %s exited normally\n", kernel->currentThread->getName());
+          // else printf("Process %s exited abnormally\n", kernel->currentThread->getName());
+
+          if (joiningThread != NULL && kernel->currentThread == runningThreads[joinedThread]) {
+            IntStatus oldLevel = kernel->interrupt->SetLevel(IntOff); // disable interrupts
+            kernel->scheduler->ReadyToRun(joiningThread);
+            kernel->interrupt->SetLevel(oldLevel);
+            joiningThread = NULL;
+            joinedThread = 0;
+          }
+
           kernel->currentThread->Finish();
-          break;
+        }break;
+
+        case SC_Join:{
+          joinedThread = kernel->machine->ReadRegister(4);
+          joiningThread = kernel->currentThread;
+          // Send the thread to sleep
+          IntStatus oldLevel = kernel->interrupt->SetLevel(IntOff); // disable interrupts
+          joiningThread->Sleep(FALSE);
+          kernel->interrupt->SetLevel(oldLevel);
+          kernel->machine->WriteRegister(2, 0);
+        }break;
           
         default:
           cerr << "Unexpected system call " << type << "\n";

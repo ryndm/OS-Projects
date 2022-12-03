@@ -58,7 +58,6 @@ class Kernel {
     PostOfficeOutput *postOfficeOut;
 
     int hostName;               // machine identifier
-    int quantumTicks;     // Quantum for RR
 
   private:
     bool randomSlice;		// enable pseudo-random time slicing

@@ -182,12 +182,12 @@ main(int argc, char **argv)
 {
     int i;
     char *debugArg = "";
-    int maxProgs = 10;
-    char **userProgName = new char*[maxProgs];        // default is not to execute a user prog
-    int currProgIndex = 0;
+    bool runUserProg = false; // jcoh
+    char *userProgNames[10];  // joch up to 10 programs
     bool threadTestFlag = false;
     bool consoleTestFlag = false;
     bool networkTestFlag = false;
+    int programCount = 0; //count of number of programs
 #ifndef FILESYS_STUB
     char *copyUnixFileName = NULL;    // UNIX file to be copied into Nachos
     char *copyNachosFileName = NULL;  // name of copied file in Nachos
@@ -211,17 +211,9 @@ main(int argc, char **argv)
 	}
 	else if (strcmp(argv[i], "-x") == 0) {
 	    ASSERT(i + 1 < argc);
-        if(currProgIndex < maxProgs) userProgName[currProgIndex++] = argv[i + 1];
-        else {
-            maxProgs *= 2;
-            char **tempPointer = userProgName;
-            userProgName = new char*[maxProgs];
-            for(int j = 0;j<currProgIndex;j++) {
-                userProgName[j] = tempPointer[j];
-            }
-            userProgName[currProgIndex++] = argv[i + 1];
-            free(tempPointer);
-        }
+	    runUserProg = true; // jcoh
+	    userProgNames[programCount] = argv[i + 1]; // jcoh
+	    programCount++; // jcoh
 	    i++;
 	}
 	else if (strcmp(argv[i], "-K") == 0) {
@@ -277,7 +269,7 @@ main(int argc, char **argv)
 
     kernel->Initialize();
 
-   CallOnUserAbort(Cleanup);		// if user hits ctl-C
+    CallOnUserAbort(Cleanup);		// if user hits ctl-C
 
     // at this point, the kernel is ready to do something
     // run some tests, if requested
@@ -286,7 +278,7 @@ main(int argc, char **argv)
       ThreadTest();
     }
     if (consoleTestFlag) {
-     kernel->ConsoleTest();   // interactive test of the synchronized console
+      kernel->ConsoleTest();   // interactive test of the synchronized console
     }
     if (networkTestFlag) {
       kernel->NetworkTest();   // two-machine test of the network
@@ -311,24 +303,12 @@ main(int argc, char **argv)
 #endif // FILESYS_STUB
 
     // finally, run an initial user program if requested to do so
-/* jcoh: commented out for Project 1
-    if (userProgName != NULL) {
-      RunUserProg(userProgName);
+    if (runUserProg) { // jcoh
+       for(int i = 0; i < programCount; i++){
+            Thread * t = new Thread(userProgNames[i]);
+            t->Fork((VoidFunctionPtr)RunUserProg, userProgNames[i]);
+        }
     }
-*/
-
-/*
-jcoh: Implement a for-loop printing out all program names given by -x flags.
-You need to modify the following printf() part with some kind of loop
-to print out all program names.
-*/
-    for(int i = 0;i<currProgIndex;i++) {
-    //   printf("Program [%d] = %s\n", i, userProgName[i]);
-      (new Thread(userProgName[i]))->Fork((VoidFunctionPtr) RunUserProg, (void *) userProgName[i]);
-    }
-
-    // I've used git versioning for better development experience
-
 
     // NOTE: if the procedure "main" returns, then the program "nachos"
     // will exit (as any other normal program would).  But there may be

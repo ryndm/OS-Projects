@@ -24,6 +24,7 @@
 
 // this is put at the top of the execution stack, for detecting stack overflows
 const int STACK_FENCEPOST = 0xdedbeef;
+int Thread::pidCount = 0;
 
 //----------------------------------------------------------------------
 // Thread::Thread
@@ -45,6 +46,9 @@ Thread::Thread(char* threadName)
 					// of machine registers
     }
     space = NULL;
+    // Assigning a PID to the process. This would be used as the SpaceId to be returned from the exec sys call
+    pidCount = (pidCount + 1) % MAX_THREADS;
+    pid = pidCount;
 }
 
 //----------------------------------------------------------------------
@@ -434,3 +438,7 @@ Thread::SelfTest()
     SimpleThread(0);
 }
 
+int
+Thread::getPid() {
+    return pid;
+}

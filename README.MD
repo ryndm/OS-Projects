@@ -1,3 +1,7 @@
+### CIS 657 Prcnpls Operating Systems
+
+#### Nachos kernel exercise solutions. Exercise solutions can be found in branches project_1..4
+
 #### code/threads -> Heart of Kernel Scheduler, synch primitives, etc
 
 #### code/filesys -> Filesystem
